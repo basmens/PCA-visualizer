@@ -1,0 +1,163 @@
+package nl.basmens;
+
+import java.io.File;
+import java.util.Arrays;
+
+import org.ejml.simple.SimpleMatrix;
+
+import nl.basmens.imageLoaders.AbstractImageLoader;
+import nl.basmens.imageLoaders.ColorImageLoader;
+import nl.benmens.processing.PApplet;
+import nl.benmens.processing.PAppletProxy;
+
+public class Main extends PApplet {
+  private static final String IMAGES_FOLDER_PATH = "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting";
+  
+  // private AbstractImageLoader imageLoader = new GrayscaleImageLoader();
+  private AbstractImageLoader imageLoader = new ColorImageLoader();
+
+  private SimpleMatrix dataMatrix;
+  private PcaCalculator pcaCalculator;
+
+  private int view = 2;
+  private int statView = 0;
+  private int eigenView = 0;
+  private int reconstructionView = 0;
+  private int dimensionCount = 1;
+
+  public void settings() {
+    size(512, 512, P2D);
+  }
+
+  public void setup() {
+    loadData();
+    pcaCalculator = new PcaCalculator(dataMatrix);
+
+    switch (view) {
+      case 0:
+        drawStats();
+        break;
+      case 1:
+        drawEigenvector();
+        break;
+      case 2:
+        drawReconstructions();
+        break;
+      default:
+        break;
+    }
+  }
+
+  public void draw() {
+  }
+
+  private void loadData() {
+    // Load images
+    File[] imagePaths = PAppletProxy.listFiles(IMAGES_FOLDER_PATH);
+    dataMatrix = imageLoader.loadImages(imagePaths);
+  }
+
+  public void drawStats() {
+    SimpleMatrix statData = switch (statView) {
+      case 0 -> pcaCalculator.getMean();
+      case 1 -> pcaCalculator.getVariance();
+      case 2 -> pcaCalculator.getStandardDeviation();
+      default -> throw new IllegalStateException("Unexpected value: " + statView);
+    };
+    image(imageLoader.vectorToImage(statData), 0, 0, width, height);
+
+    String stat = switch (statView) {
+      case 0 -> "Mean";
+      case 1 -> "Variance";
+      case 2 -> "Standard Deviation";
+      default -> throw new IllegalStateException("Unexpected value: " + statView);
+    };
+    noStroke();
+    fill(0, 30);
+    rect(0, 0, width * 2 / 3, 25 * 2 + 10);
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(20);
+    text("View: stat", 10, 5);
+    text("Stat: " + stat, 10, 25 + 5);
+  }
+
+  public void drawEigenvector() {
+    SimpleMatrix eigenData = pcaCalculator.getEigenvectors()[eigenView];
+    image(imageLoader.vectorToImage(eigenData), 0, 0, width, height);
+
+    noStroke();
+    fill(0, 30);
+    rect(0, 0, width * 2 / 3, 25 * 3 + 10);
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(20);
+    text("View: eigenvector", 10, 5);
+    text("Num: " + eigenView + "/" + (pcaCalculator.getEigenvectors().length - 1), 10, 25 + 5);
+    text(String.format("Value: %.1f", pcaCalculator.getEigenvalues()[eigenView]), 10, 25 * 2 + 5);
+  }
+
+  public void drawReconstructions() {
+    SimpleMatrix imgToReconstruct = dataMatrix.extractVector(false, reconstructionView);
+    SimpleMatrix reconstructionData = pcaCalculator.reconstructInDimensions(imgToReconstruct, dimensionCount);
+    image(imageLoader.vectorToImage(reconstructionData), 0, 0, width, height);
+
+    double totalVariance = Arrays.stream(pcaCalculator.getEigenvalues()).sum();
+    double explainedVariance = Arrays.stream(pcaCalculator.getEigenvalues(), 0, dimensionCount).sum();
+    double explainedVariancePercent = explainedVariance / totalVariance * 100;
+    double mse = imgToReconstruct.minus(reconstructionData).elementPower(2).elementSum()
+        / pcaCalculator.getFeatureCount();
+
+    noStroke();
+    fill(0, 30);
+    rect(0, 0, width * 2 / 3, 25 * 5 + 10);
+    fill(255);
+    textAlign(LEFT, TOP);
+    textSize(20);
+    text("View: reconstruction", 10, 5);
+    text("Num: " + reconstructionView + "/" + (pcaCalculator.getSampleCount() - 1), 10, 25 + 5);
+    text("Dim: " + dimensionCount + "/" + pcaCalculator.getIntrinsicDimensionality(), 10, 25 * 2 + 5);
+    text(String.format("Explained var: %.10f", explainedVariancePercent), 10, 25 * 3 + 5);
+    text(String.format("MSE: %.5f", mse), 10, 25 * 4 + 5);
+  }
+
+  public void mousePressed() {
+    view = (view + 1) % 3;
+    switch (view) {
+      case 0 -> drawStats();
+      case 1 -> drawEigenvector();
+      case 2 -> drawReconstructions();
+      default -> throw new IllegalStateException("Unexpected value: " + view);
+    }
+  }
+
+  public void keyPressed() {
+    if (view == 0 && key == ' ') {
+      statView = (statView + 1) % 3;
+      drawStats();
+    } else if (view == 1 && key == ' ') {
+      eigenView = (eigenView + 1) % pcaCalculator.getIntrinsicDimensionality();
+      drawEigenvector();
+    } else if (view == 2 && (key == ' ' || (key >= '0' && key <= '9'))) {
+      if (key == ' ')
+        reconstructionView = (reconstructionView + 1) % pcaCalculator.getSampleCount();
+      else {
+        int step = (int) Math.pow(10, key - '0');
+        dimensionCount = dimensionCount == pcaCalculator.getIntrinsicDimensionality()
+            ? 1
+            : Math.min(dimensionCount + step, pcaCalculator.getIntrinsicDimensionality());
+      }
+      drawReconstructions();
+    }
+  }
+
+  public static void main(String[] args) {
+    if (args != null) {
+      PApplet.main(new Object() {
+      }.getClass().getEnclosingClass(), args);
+    } else {
+      PApplet.main(new Object() {
+      }.getClass().getEnclosingClass());
+    }
+  }
+}

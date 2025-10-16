@@ -1,0 +1,8 @@
+{
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "java.dependency.packagePresentation": "flat",
+  "java.checkstyle.configuration": "${workspaceFolder}\\checkstyle.xml"
+} 
