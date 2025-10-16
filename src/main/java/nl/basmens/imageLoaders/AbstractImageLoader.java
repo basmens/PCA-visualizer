@@ -12,6 +12,14 @@ public abstract class AbstractImageLoader {
   abstract SimpleMatrix processImage(PImage img);
   public abstract PImage vectorToImage(SimpleMatrix vector);
 
+  private static PImage resizeImage(PImage img, int targetWidth, int targetHeight) {
+    if (img.width == targetWidth && img.height == targetHeight) return img;
+    if (img.width < targetWidth || img.height < targetHeight)
+      img.resize(Math.max(img.width, targetWidth), Math.max(img.height, targetHeight));
+    if (img.width == targetWidth && img.height == targetHeight) return img;
+    return img.get(0, 0, targetWidth, targetHeight);
+  }
+
   private static int mode(int[] arr) {
     Arrays.parallelSort(arr);
     int countStart = -1;
@@ -44,11 +52,7 @@ public abstract class AbstractImageLoader {
 
     int width = mode(widths);
     int height = mode(heights);
-    for (int i = 0; i < images.length; i++) {
-      if (images[i].width == width && images[i].height == height) continue;
-      images[i].resize(width, height);
-      System.out.println("Warning: Resized image " + files[i].getName() + " to " + width + "x" + height);
-    }
+    for (int i = 0; i < images.length; i++) images[i] = resizeImage(images[i], width, height);
 
     SimpleMatrix[] columns = new SimpleMatrix[files.length - 1];
     for (int i = 1; i < files.length; i++) {

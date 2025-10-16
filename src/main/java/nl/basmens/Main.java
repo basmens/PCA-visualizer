@@ -7,12 +7,21 @@ import org.ejml.simple.SimpleMatrix;
 
 import nl.basmens.imageLoaders.AbstractImageLoader;
 import nl.basmens.imageLoaders.ColorImageLoader;
+import nl.basmens.imageLoaders.GrayscaleImageLoader;
 import nl.benmens.processing.PApplet;
 import nl.benmens.processing.PAppletProxy;
+import processing.core.PImage;
 
 public class Main extends PApplet {
-  private static final String IMAGES_FOLDER_PATH = "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting";
+  private static final String[] IMAGES_FOLDER_PATHS = {
+    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting",
+    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/block",
+    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/item"
+  };
   
+  private static final String[] SUPPORTED_IMAGE_EXTENSIONS = new String[] { "JPG", "jpg", "tiff", "bmp", "BMP", "gif",
+    "GIF", "WBMP", "png", "PNG", "JPEG", "tif", "TIF", "TIFF", "wbmp", "jpeg" };
+
   // private AbstractImageLoader imageLoader = new GrayscaleImageLoader();
   private AbstractImageLoader imageLoader = new ColorImageLoader();
 
@@ -51,9 +60,24 @@ public class Main extends PApplet {
   public void draw() {
   }
 
+  private PImage upscaleImage(PImage img, int targetWidth, int targetHeight) {
+    PImage upscaled = createImage(targetWidth, targetHeight, RGB);
+    for (int x = 0; x < targetWidth; x++) {
+      for (int y = 0; y < targetHeight; y++) {
+        int srcX = x * img.width / targetWidth;
+        int srcY = y * img.height / targetHeight;
+        upscaled.pixels[y * targetWidth + x] = img.pixels[srcY * img.width + srcX];
+      }
+    }
+    return upscaled;
+  }
+
   private void loadData() {
     // Load images
-    File[] imagePaths = PAppletProxy.listFiles(IMAGES_FOLDER_PATH);
+    File[] imagePaths = Arrays.stream(IMAGES_FOLDER_PATHS)
+      .flatMap(f -> Arrays.stream(PAppletProxy.listFiles(f)))
+      .filter(f -> f.getName().matches(".*.(JPG|jpg|tiff|bmp|BMP|gif|GIF|WBMP|png|PNG|JPEG|tif|TIF|TIFF|wbmp|jpeg)$"))
+      .toArray(File[]::new);
     dataMatrix = imageLoader.loadImages(imagePaths);
   }
 
@@ -64,7 +88,7 @@ public class Main extends PApplet {
       case 2 -> pcaCalculator.getStandardDeviation();
       default -> throw new IllegalStateException("Unexpected value: " + statView);
     };
-    image(imageLoader.vectorToImage(statData), 0, 0, width, height);
+    background(upscaleImage(imageLoader.vectorToImage(statData), width, height));
 
     String stat = switch (statView) {
       case 0 -> "Mean";
@@ -84,7 +108,7 @@ public class Main extends PApplet {
 
   public void drawEigenvector() {
     SimpleMatrix eigenData = pcaCalculator.getEigenvectors()[eigenView];
-    image(imageLoader.vectorToImage(eigenData), 0, 0, width, height);
+    background(upscaleImage(imageLoader.vectorToImage(eigenData), width, height));
 
     noStroke();
     fill(0, 30);
@@ -100,7 +124,7 @@ public class Main extends PApplet {
   public void drawReconstructions() {
     SimpleMatrix imgToReconstruct = dataMatrix.extractVector(false, reconstructionView);
     SimpleMatrix reconstructionData = pcaCalculator.reconstructInDimensions(imgToReconstruct, dimensionCount);
-    image(imageLoader.vectorToImage(reconstructionData), 0, 0, width, height);
+    background(upscaleImage(imageLoader.vectorToImage(reconstructionData), width, height));
 
     double totalVariance = Arrays.stream(pcaCalculator.getEigenvalues()).sum();
     double explainedVariance = Arrays.stream(pcaCalculator.getEigenvalues(), 0, dimensionCount).sum();
