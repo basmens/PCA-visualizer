@@ -7,8 +7,6 @@ import java.util.stream.IntStream;
 import org.ejml.simple.SimpleEVD;
 import org.ejml.simple.SimpleMatrix;
 
-import static processing.core.PApplet.print;
-
 public class PcaCalculator {
   private final SimpleMatrix dataMatrix;
   private final int featureCount;
