@@ -14,11 +14,11 @@ import processing.core.PImage;
 
 public class Main extends PApplet {
   private static final String[] IMAGES_FOLDER_PATHS = {
-    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting",
-    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/block",
-    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/item"
+    // "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting",
+    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/block"
+    // "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/item"
   };
-  
+
   private static final String[] SUPPORTED_IMAGE_EXTENSIONS = new String[] { "JPG", "jpg", "tiff", "bmp", "BMP", "gif",
     "GIF", "WBMP", "png", "PNG", "JPEG", "tif", "TIF", "TIFF", "wbmp", "jpeg" };
 
@@ -33,6 +33,7 @@ public class Main extends PApplet {
   private int eigenView = 0;
   private int reconstructionView = 0;
   private int dimensionCount = 1;
+  private boolean reconstructAdjustForMean = true;
 
   public void settings() {
     size(512, 512, P2D);
@@ -75,9 +76,9 @@ public class Main extends PApplet {
   private void loadData() {
     // Load images
     File[] imagePaths = Arrays.stream(IMAGES_FOLDER_PATHS)
-      .flatMap(f -> Arrays.stream(PAppletProxy.listFiles(f)))
-      .filter(f -> f.getName().matches(".*.(JPG|jpg|tiff|bmp|BMP|gif|GIF|WBMP|png|PNG|JPEG|tif|TIF|TIFF|wbmp|jpeg)$"))
-      .toArray(File[]::new);
+        .flatMap(f -> Arrays.stream(PAppletProxy.listFiles(f)))
+        .filter(f -> f.getName().matches(".*.(JPG|jpg|tiff|bmp|BMP|gif|GIF|WBMP|png|PNG|JPEG|tif|TIF|TIFF|wbmp|jpeg)$"))
+        .toArray(File[]::new);
     dataMatrix = imageLoader.loadImages(imagePaths);
   }
 
@@ -123,7 +124,8 @@ public class Main extends PApplet {
 
   public void drawReconstructions() {
     SimpleMatrix imgToReconstruct = dataMatrix.extractVector(false, reconstructionView);
-    SimpleMatrix reconstructionData = pcaCalculator.reconstructInDimensions(imgToReconstruct, dimensionCount);
+    SimpleMatrix reconstructionData = pcaCalculator.reconstructInDimensions(imgToReconstruct, dimensionCount,
+        reconstructAdjustForMean);
     background(upscaleImage(imageLoader.vectorToImage(reconstructionData), width, height));
 
     double totalVariance = Arrays.stream(pcaCalculator.getEigenvalues()).sum();
@@ -134,15 +136,16 @@ public class Main extends PApplet {
 
     noStroke();
     fill(0, 30);
-    rect(0, 0, width * 2 / 3, 25 * 5 + 10);
+    rect(0, 0, width * 2 / 3, 25 * 6 + 10);
     fill(255);
     textAlign(LEFT, TOP);
     textSize(20);
     text("View: reconstruction", 10, 5);
     text("Num: " + reconstructionView + "/" + (pcaCalculator.getSampleCount() - 1), 10, 25 + 5);
     text("Dim: " + dimensionCount + "/" + pcaCalculator.getIntrinsicDimensionality(), 10, 25 * 2 + 5);
-    text(String.format("Explained var: %.10f", explainedVariancePercent), 10, 25 * 3 + 5);
-    text(String.format("MSE: %.5f", mse), 10, 25 * 4 + 5);
+    text("Adjust for mean: " + reconstructAdjustForMean, 10, 25 * 3 + 5);
+    text(String.format("Explained var: %.10f", explainedVariancePercent), 10, 25 * 4 + 5);
+    text(String.format("MSE: %.5f", mse), 10, 25 * 5 + 5);
   }
 
   public void mousePressed() {
@@ -162,10 +165,12 @@ public class Main extends PApplet {
     } else if (view == 1 && key == ' ') {
       eigenView = (eigenView + 1) % pcaCalculator.getIntrinsicDimensionality();
       drawEigenvector();
-    } else if (view == 2 && (key == ' ' || (key >= '0' && key <= '9'))) {
-      if (key == ' ')
+    } else if (view == 2 && (key == ' ' || key == 'm' || (key >= '0' && key <= '9'))) {
+      if (key == ' ') {
         reconstructionView = (reconstructionView + 1) % pcaCalculator.getSampleCount();
-      else {
+      } else if (key == 'm') {
+        reconstructAdjustForMean = !reconstructAdjustForMean;
+      } else {
         int step = (int) Math.pow(10, key - '0');
         dimensionCount = dimensionCount == pcaCalculator.getIntrinsicDimensionality()
             ? 1

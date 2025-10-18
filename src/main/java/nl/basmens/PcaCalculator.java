@@ -74,10 +74,18 @@ public class PcaCalculator {
     eigenvectors = eigenPairs.stream().map(ep -> ep.eigenvector).toArray(SimpleMatrix[]::new);
   }
 
-  public SimpleMatrix reconstructInDimensions(SimpleMatrix data, int dimensions) {
+  public SimpleMatrix reconstructInDimensions(SimpleMatrix data, int dimensions, boolean adjustForMean) {
+    // Project data into PCA subspace and back
     SimpleMatrix eigenMatrix = eigenvectors[0].concatColumns(Arrays.copyOfRange(eigenvectors, 1, dimensions));
     SimpleMatrix projected = data.transpose().mult(eigenMatrix);
-    return projected.mult(eigenMatrix.transpose()).transpose();
+    SimpleMatrix recovered = projected.mult(eigenMatrix.transpose()).transpose();
+    if (!adjustForMean) return recovered;
+
+    // Adjust for mean
+    SimpleMatrix projectedMean = mean.transpose().mult(eigenMatrix);
+    SimpleMatrix recoveredMean = projectedMean.mult(eigenMatrix.transpose()).transpose();
+    SimpleMatrix orthogonalMean = mean.minus(recoveredMean);
+    return recovered.plus(orthogonalMean);
   }
 
   private record EigenPair(double eigenvalue, SimpleMatrix eigenvector) implements Comparable<EigenPair> {
