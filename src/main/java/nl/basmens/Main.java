@@ -8,6 +8,7 @@ import org.ejml.simple.SimpleMatrix;
 import nl.basmens.imageLoaders.AbstractImageLoader;
 import nl.basmens.imageLoaders.ColorImageLoader;
 import nl.basmens.imageLoaders.GrayscaleImageLoader;
+import nl.basmens.imageLoaders.HsbImageLoader;
 import nl.benmens.processing.PApplet;
 import nl.benmens.processing.PAppletProxy;
 import processing.core.PImage;
@@ -24,6 +25,7 @@ public class Main extends PApplet {
 
   // private AbstractImageLoader imageLoader = new GrayscaleImageLoader();
   private AbstractImageLoader imageLoader = new ColorImageLoader();
+  // private AbstractImageLoader imageLoader = new HsbImageLoader();
 
   private SimpleMatrix dataMatrix;
   private PcaCalculator pcaCalculator;

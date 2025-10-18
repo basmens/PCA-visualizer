@@ -50,6 +50,14 @@ public class PcaCalculator {
     variance = variance.divide(sampleCount - 1);
     standardDeviation = variance.elementPower(0.5);
 
+    // Apply some bias to the variances to give some features more importance
+    // double[] bias = new double[featureCount];
+    // for (int i = 0; i < featureCount; i++) bias[i] = i % 3 == 0 ? 2 : (i % 3 == 2 ? 1 : 1);
+    // SimpleMatrix biasMatrix = new SimpleMatrix(bias);
+    // for (int i = 0; i < featureCount; i++) {
+    //   cols[i] = cols[i].elementMult(biasMatrix);
+    // }
+
     // Calculate covariance matrix by normalizing data to 0 mean and unit variance first,
     // and then multiplying the normalized data matrix by its transpose
     SimpleMatrix sdNoZeros = new SimpleMatrix(
