@@ -14,17 +14,29 @@ import nl.benmens.processing.PAppletProxy;
 import processing.core.PImage;
 
 public class Main extends PApplet {
+  // private static final String[] IMAGES_FOLDER_PATHS = {
+  //   // "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting",
+  //   // "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/block"
+  //   "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/item"
+  // };
   private static final String[] IMAGES_FOLDER_PATHS = {
-    // "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/painting",
-    "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/block"
-    // "C:/Users/basme/AppData/Roaming/.minecraft/resourcepacks/1.21.8/assets/minecraft/textures/item"
+    "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/0",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/1",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/2",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/3",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/4",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/5",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/6",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/7",
+    // "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/8",
+    "C:/Users/basme/OneDrive/Desktop laptop/PCA visualizer/datasets/mnist_images/testing/9"
   };
 
   private static final String[] SUPPORTED_IMAGE_EXTENSIONS = new String[] { "JPG", "jpg", "tiff", "bmp", "BMP", "gif",
     "GIF", "WBMP", "png", "PNG", "JPEG", "tif", "TIF", "TIFF", "wbmp", "jpeg" };
 
-  // private AbstractImageLoader imageLoader = new GrayscaleImageLoader();
-  private AbstractImageLoader imageLoader = new ColorImageLoader();
+  private AbstractImageLoader imageLoader = new GrayscaleImageLoader();
+  // private AbstractImageLoader imageLoader = new ColorImageLoader();
   // private AbstractImageLoader imageLoader = new HsbImageLoader();
 
   private SimpleMatrix dataMatrix;
@@ -80,6 +92,7 @@ public class Main extends PApplet {
     File[] imagePaths = Arrays.stream(IMAGES_FOLDER_PATHS)
         .flatMap(f -> Arrays.stream(PAppletProxy.listFiles(f)))
         .filter(f -> f.getName().matches(".*.(JPG|jpg|tiff|bmp|BMP|gif|GIF|WBMP|png|PNG|JPEG|tif|TIF|TIFF|wbmp|jpeg)$"))
+        .sorted((a, b) -> a.getName().compareTo(b.getName()))
         .toArray(File[]::new);
     dataMatrix = imageLoader.loadImages(imagePaths);
   }
