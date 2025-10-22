@@ -6,11 +6,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>nl.basmens</groupId>
-  <artifactId>basic-text-editor</artifactId>
+  <artifactId>pca-visualizer</artifactId>
   <version>0.0.1-SNAPSHOT</version>
 
-  <name>basic-text-editor</name>
-  <url></url>
+
+  <name>pca-visualizer</name>
+  <url>https://github.com/basmens/PCA-visualizer</url>
 
   <repositories>
     <repository>
